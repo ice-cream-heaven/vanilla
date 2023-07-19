@@ -2,6 +2,7 @@ package adapter
 
 import (
 	"fmt"
+	"github.com/Dreamacro/clash/adapter/outbound"
 	"github.com/ice-cream-heaven/log"
 	"reflect"
 	"strings"
@@ -208,4 +209,60 @@ func decode(dst map[string]any, src any) error {
 	}
 
 	return nil
+}
+
+func ToOption(src any) any {
+	if val, ok := src.(map[string]any); ok {
+		if typ, ok := val["type"]; ok {
+			var opt any
+			switch typ {
+			case "ss", "shadowsocks":
+				opt = &outbound.ShadowSocksOption{}
+
+			case "ssr", "shadowsocksr":
+				opt = &outbound.ShadowSocksROption{}
+
+			case "snell":
+				opt = &outbound.SnellOption{}
+
+			case "socks", "socks5", "socks4":
+				opt = &outbound.Socks5Option{}
+
+			case "http", "https":
+				opt = &outbound.HttpOption{}
+
+			case "vmess":
+				opt = &outbound.VmessOption{}
+
+			case "vless":
+				opt = &outbound.VlessOption{}
+
+			case "trojan":
+				opt = &outbound.TrojanOption{}
+
+			case "hysteria":
+				opt = &outbound.HysteriaOption{}
+
+			case "wireguard":
+				opt = &outbound.WireGuardOption{}
+
+			case "tuic":
+				opt = &outbound.TuicOption{}
+
+			default:
+				return typ
+			}
+
+			err := decoder.Decode(val, opt)
+			if err != nil {
+				return err
+			}
+
+			return opt
+		}
+
+		return val
+	} else {
+		return src
+	}
 }

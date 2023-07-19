@@ -13,10 +13,13 @@ type Adapter struct {
 	uniqueId string
 
 	client *resty.Client
+
+	opt map[string]any
 }
 
-func NewAdapter(c constant.ProxyAdapter, o any) (*Adapter, error) {
+func NewAdapter(c constant.ProxyAdapter, o map[string]any) (*Adapter, error) {
 	p := &Adapter{
+		opt:          o,
 		ProxyAdapter: c,
 		client: resty.New().
 			SetTimeout(time.Minute).
@@ -25,7 +28,7 @@ func NewAdapter(c constant.ProxyAdapter, o any) (*Adapter, error) {
 			SetRedirectPolicy(resty.FlexibleRedirectPolicy(10)),
 	}
 
-	err := p.updateUniqueId(c.Type(), o)
+	err := p.updateUniqueId()
 	if err != nil {
 		return nil, err
 	}
@@ -40,18 +43,26 @@ func NewAdapter(c constant.ProxyAdapter, o any) (*Adapter, error) {
 }
 
 func (p *Adapter) ToClash() map[string]any {
-	inner, err := p.ProxyAdapter.MarshalJSON()
-	if err != nil {
-		return map[string]any{}
+	mapping := p.opt
+	mapping["name"] = p.Name()
+
+	if p.SupportUDP() {
+		mapping["udp"] = true
+	} else {
+		delete(mapping, "udp")
 	}
 
-	mapping := map[string]any{}
-	_ = sonic.Unmarshal(inner, &mapping)
+	if p.SupportXUDP() {
+		mapping["xudp"] = true
+	} else {
+		delete(mapping, "xudp")
+	}
 
-	mapping["name"] = p.Name()
-	mapping["udp"] = p.SupportUDP()
-	mapping["xudp"] = p.SupportXUDP()
-	mapping["tfo"] = p.SupportTFO()
+	if p.SupportTFO() {
+		mapping["tfo"] = true
+	} else {
+		delete(mapping, "tfo")
+	}
 
-	return nil
+	return mapping
 }

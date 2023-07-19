@@ -21,8 +21,10 @@ func (p *Adapter) ShortId() string {
 	return p.uniqueId[:8]
 }
 
-func (p *Adapter) updateUniqueId(t constant.AdapterType, o any) error {
-	switch t {
+func (p *Adapter) updateUniqueId() error {
+	o := ToOption(p.opt)
+
+	switch p.Type() {
 	case constant.Direct:
 		p.uniqueId = "direct"
 
@@ -202,6 +204,7 @@ func (p *Adapter) updateUniqueId(t constant.AdapterType, o any) error {
 		}
 
 		p.uniqueId = fmt.Sprintf("%x", sha512.Sum512([]byte(u.String())))
+
 	case constant.Vless:
 		var opt *outbound.VlessOption
 		switch x := o.(type) {
@@ -342,7 +345,7 @@ func (p *Adapter) updateUniqueId(t constant.AdapterType, o any) error {
 		p.uniqueId = fmt.Sprintf("%x", sha512.Sum512([]byte(u.String())))
 
 	default:
-		return fmt.Errorf("unsupported protocol: %s", t)
+		return fmt.Errorf("unsupported protocol: %s", p.Type())
 	}
 
 	return nil

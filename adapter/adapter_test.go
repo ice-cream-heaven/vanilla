@@ -2,6 +2,8 @@ package adapter_test
 
 import (
 	"github.com/AdguardTeam/gomitmproxy"
+	"github.com/ice-cream-heaven/vanilla/adapter"
+	"gopkg.in/yaml.v3"
 	"net"
 	"net/http"
 	"net/url"
@@ -63,4 +65,22 @@ func TestMitm(t *testing.T) {
 	defer resp.Body.Close()
 
 	t.Logf("status code :%v", resp.StatusCode)
+}
+
+func TestClash(t *testing.T) {
+	var m map[string]any
+	err := yaml.Unmarshal([]byte(`{name: 1151feb9798f, server: 140.99.94.19, port: 443, type: vmess, uuid: 418048af-a293-4b99-9b0c-98ca3580dd24, alterId: 64, cipher: auto, tls: true, skip-cert-verify: true, servername: www.36781285.xyz, network: ws, ws-opts: {path: /path/262103260509}, udp: true}`), &m)
+	if err != nil {
+		t.Errorf("err:%v", err)
+		return
+	}
+
+	a, err := adapter.ParseClash(m)
+	if err != nil {
+		t.Errorf("err:%v", err)
+		return
+	}
+
+	t.Log(a.ToClash())
+	t.Log(a.UniqueId())
 }
