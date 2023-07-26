@@ -2,8 +2,10 @@ package adapter
 
 import (
 	"context"
+	"github.com/Dreamacro/clash/component/dialer"
 	"github.com/Dreamacro/clash/constant"
 	"github.com/go-resty/resty/v2"
+	"github.com/ice-cream-heaven/log"
 	"github.com/ice-cream-heaven/vanilla/dns"
 	"net"
 	"net/http"
@@ -46,9 +48,27 @@ func (p *Adapter) HttpDialContext(ctx context.Context, network, addr string) (ne
 		}
 	case DnsRemote:
 		// TODO: 优化
+		ip, err := netip.ParseAddr(meta.Host)
+		if err == nil {
+			meta.DstIP = ip
+		} else {
+			for _, resolver := range p.resolvers {
+				ips, err := resolver.LookupIPv4(meta.Host)
+				if err != nil {
+					log.Errorf("err:%v", err)
+					continue
+				}
+
+				if len(ips) == 0 {
+					continue
+				}
+
+				meta.DstIP = netip.AddrFrom4([4]byte(ips[0]))
+			}
+		}
 	}
 
-	return p.ProxyAdapter.DialContext(ctx, meta)
+	return p.ProxyAdapter.DialContext(ctx, meta, dialer.WithPreferIPv4())
 }
 
 func (p *Adapter) Transport() http.RoundTripper {

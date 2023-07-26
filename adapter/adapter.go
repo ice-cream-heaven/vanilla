@@ -3,7 +3,10 @@ package adapter
 import (
 	"github.com/Dreamacro/clash/constant"
 	"github.com/bytedance/sonic"
+	"github.com/elliotchance/pie/v2"
 	"github.com/go-resty/resty/v2"
+	"github.com/ice-cream-heaven/log"
+	"github.com/ice-cream-heaven/vanilla/dns"
 	"time"
 )
 
@@ -25,7 +28,8 @@ type Adapter struct {
 	opt map[string]any
 
 	// 一些特殊配置
-	dnsMode DnsMode
+	dnsMode   DnsMode
+	resolvers []dns.Resolver
 }
 
 func NewAdapter(c constant.ProxyAdapter, o map[string]any) (*Adapter, error) {
@@ -53,8 +57,19 @@ func NewAdapter(c constant.ProxyAdapter, o map[string]any) (*Adapter, error) {
 	return p, nil
 }
 
-func (p *Adapter) DnsMode(m DnsMode) *Adapter {
+func (p *Adapter) DnsMode(m DnsMode, nameservers ...string) *Adapter {
 	p.dnsMode = m
+
+	if len(nameservers) > 0 {
+		p.resolvers = append([]dns.Resolver{}, pie.Map(nameservers, func(addr string) dns.Resolver {
+			res, err := dns.NewResolverWithProxy(addr, p.HttpDial)
+			if err != nil {
+				log.Panicf("err:%v", err)
+			}
+			return res
+		})...)
+	}
+
 	return p
 }
 
