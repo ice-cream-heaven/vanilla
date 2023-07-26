@@ -4,12 +4,50 @@ import (
 	"github.com/AdguardTeam/gomitmproxy"
 	"github.com/ice-cream-heaven/vanilla/adapter"
 	"gopkg.in/yaml.v3"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
 	"os"
 	"testing"
 )
+
+func TestHttp(t *testing.T) {
+	request, err := http.NewRequest(http.MethodGet, "https://www.baidu.com", nil)
+	if err != nil {
+		t.Errorf("err:%v", err)
+		return
+	}
+
+	client := &http.Client{
+		Transport: &http.Transport{
+			Proxy: http.ProxyURL(&url.URL{
+				Scheme: "http",
+				Host:   "127.0.0.1:10909",
+			}),
+			//TLSClientConfig: &tls.Config{
+			//	InsecureSkipVerify: true,
+			//},
+		},
+	}
+	defer client.CloseIdleConnections()
+
+	resp, err := client.Do(request)
+	if err != nil {
+		t.Errorf("err:%v", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	buf, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Errorf("err:%v", err)
+		return
+	}
+
+	t.Logf("status code :%v", resp.StatusCode)
+	t.Log(string(buf))
+}
 
 func TestMitm(t *testing.T) {
 	go func() {

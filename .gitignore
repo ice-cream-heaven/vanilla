@@ -604,5 +604,6 @@ next-env.d.ts
 *.rej
 secring.*
 
-config.yaml
+conf.yaml
 !config.example.yaml
+*.ttf

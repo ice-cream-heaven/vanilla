@@ -7,6 +7,14 @@ import (
 	"time"
 )
 
+type DnsMode int
+
+const (
+	DnsDisable DnsMode = iota
+	DnsDirect
+	DnsRemote
+)
+
 type Adapter struct {
 	constant.ProxyAdapter
 
@@ -15,6 +23,9 @@ type Adapter struct {
 	client *resty.Client
 
 	opt map[string]any
+
+	// 一些特殊配置
+	dnsMode DnsMode
 }
 
 func NewAdapter(c constant.ProxyAdapter, o map[string]any) (*Adapter, error) {
@@ -40,6 +51,11 @@ func NewAdapter(c constant.ProxyAdapter, o map[string]any) (*Adapter, error) {
 	}
 
 	return p, nil
+}
+
+func (p *Adapter) DnsMode(m DnsMode) *Adapter {
+	p.dnsMode = m
+	return p
 }
 
 func (p *Adapter) ToClash() map[string]any {
