@@ -62,7 +62,7 @@ func (p *Adapter) DnsMode(m DnsMode, nameservers ...string) *Adapter {
 
 	if len(nameservers) > 0 {
 		p.resolvers = append([]dns.Resolver{}, pie.Map(nameservers, func(addr string) dns.Resolver {
-			res, err := dns.NewResolverWithProxy(addr, p.HttpDial)
+			res, err := dns.NewResolverWithProxy(addr, p.DialForDns)
 			if err != nil {
 				log.Panicf("err:%v", err)
 			}

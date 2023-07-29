@@ -17,6 +17,29 @@ func (p *Adapter) HttpDial(network, addr string) (net.Conn, error) {
 	return p.HttpDialContext(context.Background(), network, addr)
 }
 
+func (p *Adapter) DialForDns(network, addr string) (net.Conn, error) {
+	meta := &constant.Metadata{}
+	switch network {
+	case "tcp", "tcp4", "tcp6":
+		meta.NetWork = constant.TCP
+	case "udp", "udp4", "udp6":
+		meta.NetWork = constant.UDP
+	default:
+		meta.NetWork = constant.InvalidNet
+	}
+
+	meta.Host, meta.DstPort, _ = net.SplitHostPort(addr)
+
+	return p.ProxyAdapter.DialContext(
+		context.Background(), meta,
+		dialer.WithPreferIPv4(),
+		dialer.WithNetDialer(&net.Dialer{
+			Timeout:   5 * time.Second,
+			KeepAlive: 10 * time.Second,
+		}),
+	)
+}
+
 func (p *Adapter) HttpDialContext(ctx context.Context, network, addr string) (net.Conn, error) {
 	meta := &constant.Metadata{}
 	switch network {
@@ -47,7 +70,6 @@ func (p *Adapter) HttpDialContext(ctx context.Context, network, addr string) (ne
 			}
 		}
 	case DnsRemote:
-		// TODO: 优化
 		ip, err := netip.ParseAddr(meta.Host)
 		if err == nil {
 			meta.DstIP = ip
