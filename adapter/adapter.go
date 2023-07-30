@@ -1,6 +1,7 @@
 package adapter
 
 import (
+	"fmt"
 	"github.com/Dreamacro/clash/constant"
 	"github.com/bytedance/sonic"
 	"github.com/elliotchance/pie/v2"
@@ -51,7 +52,7 @@ func NewAdapter(c constant.ProxyAdapter, o map[string]any) (*Adapter, error) {
 	{
 		p.client.JSONUnmarshal = sonic.Unmarshal
 		p.client.JSONMarshal = sonic.Marshal
-		p.client.SetTransport(p.Transport())
+		p.client.SetTransport(p.Transport()).SetLogger(log.Clone().SetPrefixMsg(fmt.Sprintf("vanilla[%s]", p.ShortId())))
 	}
 
 	return p, nil

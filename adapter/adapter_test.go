@@ -107,7 +107,7 @@ func TestMitm(t *testing.T) {
 
 func TestClash(t *testing.T) {
 	var m map[string]any
-	err := yaml.Unmarshal([]byte(`{name: 1151feb9798f, server: 140.99.94.19, port: 443, type: vmess, uuid: 418048af-a293-4b99-9b0c-98ca3580dd24, alterId: 64, cipher: auto, tls: true, skip-cert-verify: true, servername: www.36781285.xyz, network: ws, ws-opts: {path: /path/262103260509}, udp: true}`), &m)
+	err := yaml.Unmarshal([]byte(`{name: b89a2b0077ac|c, server: 140.99.94.19, port: 443, type: vmess, uuid: 418048af-a293-4b99-9b0c-98ca3580dd24, alterId: 64, cipher: auto, tls: true, skip-cert-verify: true, servername: www.89184508.xyz, network: ws, ws-opts: {path: /path/211734121312}, udp: true}`), &m)
 	if err != nil {
 		t.Errorf("err:%v", err)
 		return
@@ -121,4 +121,8 @@ func TestClash(t *testing.T) {
 
 	t.Log(a.ToClash())
 	t.Log(a.UniqueId())
+
+	a.DnsMode(adapter.DnsRemote, "8.8.8.8")
+
+	_, _ = a.R().Get("https://www.baidu.com")
 }

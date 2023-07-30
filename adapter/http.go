@@ -13,6 +13,39 @@ import (
 	"time"
 )
 
+func (p *Adapter) dnsQuery(host string) (ip netip.Addr) {
+	switch p.dnsMode {
+	case DnsDisable:
+		// do nothing
+	case DnsDirect:
+		ip, _ = netip.ParseAddr(host)
+		if !ip.IsValid() {
+			_ip, _ := dns.DefaultResolver.LookupHost(host)
+			ip = netip.AddrFrom4([4]byte(_ip))
+		}
+	case DnsRemote:
+		ip, _ = netip.ParseAddr(host)
+		if !ip.IsValid() {
+			for _, resolver := range p.resolvers {
+				ips, err := resolver.LookupIPv4(host)
+				if err != nil {
+					log.Errorf("err:%v", err)
+					continue
+				}
+
+				if len(ips) == 0 {
+					continue
+				}
+
+				ip = netip.AddrFrom4([4]byte(ips[0]))
+				break
+			}
+		}
+	}
+
+	return
+}
+
 func (p *Adapter) HttpDial(network, addr string) (net.Conn, error) {
 	return p.HttpDialContext(context.Background(), network, addr)
 }
@@ -29,13 +62,20 @@ func (p *Adapter) DialForDns(network, addr string) (net.Conn, error) {
 	}
 
 	meta.Host, meta.DstPort, _ = net.SplitHostPort(addr)
+	meta.DstIP = p.dnsQuery(meta.Host)
+	if meta.DstIP.IsValid() {
+		meta.Host = ""
+		meta.DNSMode = constant.DNSFakeIP
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+	defer cancel()
 
 	return p.ProxyAdapter.DialContext(
-		context.Background(), meta,
-		dialer.WithPreferIPv4(),
+		ctx, meta,
 		dialer.WithNetDialer(&net.Dialer{
-			Timeout:   5 * time.Second,
-			KeepAlive: 10 * time.Second,
+			Timeout:   time.Second,
+			KeepAlive: 30 * time.Second,
 		}),
 	)
 }
@@ -52,42 +92,10 @@ func (p *Adapter) HttpDialContext(ctx context.Context, network, addr string) (ne
 	}
 
 	meta.Host, meta.DstPort, _ = net.SplitHostPort(addr)
-
-	switch p.dnsMode {
-	case DnsDisable:
-	// do nothing
-	case DnsDirect:
-		ip, err := netip.ParseAddr(meta.Host)
-		if err == nil {
-			// host是一个ip
-			meta.DstIP = ip
-		} else {
-			ip, err := dns.DefaultResolver.LookupHost(meta.Host)
-			if err == nil {
-				meta.DstIP = netip.AddrFrom4([4]byte(ip))
-				meta.Host = ""
-				meta.DNSMode = constant.DNSMapping
-			}
-		}
-	case DnsRemote:
-		ip, err := netip.ParseAddr(meta.Host)
-		if err == nil {
-			meta.DstIP = ip
-		} else {
-			for _, resolver := range p.resolvers {
-				ips, err := resolver.LookupIPv4(meta.Host)
-				if err != nil {
-					log.Errorf("err:%v", err)
-					continue
-				}
-
-				if len(ips) == 0 {
-					continue
-				}
-
-				meta.DstIP = netip.AddrFrom4([4]byte(ips[0]))
-			}
-		}
+	meta.DstIP = p.dnsQuery(meta.Host)
+	if meta.DstIP.IsValid() {
+		meta.Host = ""
+		meta.DNSMode = constant.DNSFakeIP
 	}
 
 	return p.ProxyAdapter.DialContext(ctx, meta, dialer.WithPreferIPv4())
