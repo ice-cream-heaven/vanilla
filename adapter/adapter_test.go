@@ -122,7 +122,5 @@ func TestClash(t *testing.T) {
 	t.Log(a.ToClash())
 	t.Log(a.UniqueId())
 
-	a.DnsMode(adapter.DnsRemote, "8.8.8.8")
-
-	_, _ = a.R().Get("https://www.baidu.com")
+	t.Log(a.Addr())
 }

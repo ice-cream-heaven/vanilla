@@ -1,6 +1,7 @@
 package adapter
 
 import (
+	"errors"
 	"fmt"
 	"github.com/Dreamacro/clash/constant"
 	"github.com/bytedance/sonic"
@@ -8,6 +9,7 @@ import (
 	"github.com/go-resty/resty/v2"
 	"github.com/ice-cream-heaven/log"
 	"github.com/ice-cream-heaven/vanilla/dns"
+	"net/netip"
 	"time"
 )
 
@@ -44,6 +46,16 @@ func NewAdapter(c constant.ProxyAdapter, o map[string]any) (*Adapter, error) {
 			SetRedirectPolicy(resty.FlexibleRedirectPolicy(10)),
 	}
 
+	switch c.Type() {
+	case constant.Direct, constant.Reject:
+		// do nothing
+	default:
+		err := p.validateAddr()
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	err := p.updateUniqueId()
 	if err != nil {
 		return nil, err
@@ -56,6 +68,59 @@ func NewAdapter(c constant.ProxyAdapter, o map[string]any) (*Adapter, error) {
 	}
 
 	return p, nil
+}
+
+func (p *Adapter) validateAddr() error {
+	ip, err := netip.ParseAddr(p.Addr())
+	if err != nil {
+		return nil
+	}
+
+	if ip.IsPrivate() {
+		return errors.New("private addr")
+	}
+
+	if ip.IsLoopback() {
+		return errors.New("loopback addr")
+	}
+
+	if ip.IsMulticast() {
+		return errors.New("multicast addr")
+	}
+
+	if ip.IsUnspecified() {
+		return errors.New("unspecified addr")
+	}
+
+	if ip.IsLinkLocalUnicast() {
+		return errors.New("link local unicast addr")
+	}
+
+	if ip.IsLinkLocalMulticast() {
+		return errors.New("link local multicast addr")
+	}
+
+	if ip.IsInterfaceLocalMulticast() {
+		return errors.New("interface local multicast addr")
+	}
+
+	if ip.IsInterfaceLocalMulticast() {
+		return errors.New("interface local multicast addr")
+	}
+
+	if ip.IsGlobalUnicast() {
+		return errors.New("global unicast addr")
+	}
+
+	if ip.String() == "8.8.8.8" {
+		return errors.New("google dns")
+	}
+
+	if ip.String() == "1.1.1.1" {
+		return errors.New("cloudflare dns")
+	}
+
+	return nil
 }
 
 func (p *Adapter) DnsMode(m DnsMode, nameservers ...string) *Adapter {
