@@ -607,3 +607,4 @@ secring.*
 conf.yaml
 !config.example.yaml
 *.ttf
+*.mmdb

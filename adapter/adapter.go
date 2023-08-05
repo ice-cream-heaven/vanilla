@@ -9,6 +9,7 @@ import (
 	"github.com/go-resty/resty/v2"
 	"github.com/ice-cream-heaven/log"
 	"github.com/ice-cream-heaven/vanilla/dns"
+	"net"
 	"net/netip"
 	"time"
 )
@@ -71,7 +72,12 @@ func NewAdapter(c constant.ProxyAdapter, o map[string]any) (*Adapter, error) {
 }
 
 func (p *Adapter) validateAddr() error {
-	ip, err := netip.ParseAddr(p.Addr())
+	host, _, err := net.SplitHostPort(p.Addr())
+	if err != nil {
+		return err
+	}
+
+	ip, err := netip.ParseAddr(host)
 	if err != nil {
 		return nil
 	}
@@ -82,34 +88,6 @@ func (p *Adapter) validateAddr() error {
 
 	if ip.IsLoopback() {
 		return errors.New("loopback addr")
-	}
-
-	if ip.IsMulticast() {
-		return errors.New("multicast addr")
-	}
-
-	if ip.IsUnspecified() {
-		return errors.New("unspecified addr")
-	}
-
-	if ip.IsLinkLocalUnicast() {
-		return errors.New("link local unicast addr")
-	}
-
-	if ip.IsLinkLocalMulticast() {
-		return errors.New("link local multicast addr")
-	}
-
-	if ip.IsInterfaceLocalMulticast() {
-		return errors.New("interface local multicast addr")
-	}
-
-	if ip.IsInterfaceLocalMulticast() {
-		return errors.New("interface local multicast addr")
-	}
-
-	if ip.IsGlobalUnicast() {
-		return errors.New("global unicast addr")
 	}
 
 	if ip.String() == "8.8.8.8" {

@@ -101,6 +101,27 @@ func (p *Adapter) HttpDialContext(ctx context.Context, network, addr string) (ne
 	return p.ProxyAdapter.DialContext(ctx, meta, dialer.WithPreferIPv4())
 }
 
+func (p *Adapter) HttpDialDialer(ctx context.Context, network, addr string, opts ...dialer.Option) (net.Conn, error) {
+	meta := &constant.Metadata{}
+	switch network {
+	case "tcp", "tcp4", "tcp6":
+		meta.NetWork = constant.TCP
+	case "udp", "udp4", "udp6":
+		meta.NetWork = constant.UDP
+	default:
+		meta.NetWork = constant.InvalidNet
+	}
+
+	meta.Host, meta.DstPort, _ = net.SplitHostPort(addr)
+	meta.DstIP = p.dnsQuery(meta.Host)
+	if meta.DstIP.IsValid() {
+		meta.Host = ""
+		meta.DNSMode = constant.DNSFakeIP
+	}
+
+	return p.ProxyAdapter.DialContext(ctx, meta, opts...)
+}
+
 func (p *Adapter) Transport() http.RoundTripper {
 	return &http.Transport{
 		DialContext: p.HttpDialContext,
