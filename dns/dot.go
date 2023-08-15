@@ -8,6 +8,16 @@ import (
 
 type DotClient struct {
 	client *net.Resolver
+	name   string
+}
+
+func (p *DotClient) SetName(name string) Resolver {
+	p.name = name
+	return p
+}
+
+func (p *DotClient) Name() string {
+	return p.name
 }
 
 func (p *DotClient) LookupIP(host string) (ips []net.IP, err error) {
@@ -29,6 +39,7 @@ func NewDotClient(addr string, dial Dial) (*DotClient, error) {
 	}
 
 	return &DotClient{
+		name:   addr,
 		client: client,
 	}, nil
 }

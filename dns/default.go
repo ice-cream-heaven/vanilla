@@ -3,8 +3,11 @@ package dns
 import (
 	"errors"
 	"github.com/Dreamacro/clash/common/cache"
+	"github.com/elliotchance/pie/v2"
 	"github.com/ice-cream-heaven/log"
+	"github.com/ice-cream-heaven/utils/wait"
 	"net"
+	"sync"
 	"time"
 )
 
@@ -151,4 +154,36 @@ func (p *defaultResolver) LookupIPv6(host string) (ips []net.IP, err error) {
 
 func (p *defaultResolver) AddResolver(resolver ...Resolver) {
 	p.resolvers = append(p.resolvers, resolver...)
+}
+
+func (p *defaultResolver) QueryA(host string) map[string][]net.IP {
+	var lock sync.Mutex
+	m := map[string][]net.IP{}
+
+	wait.Async(
+		5,
+		func(ms chan Resolver) {
+			for _, resolver := range p.resolvers {
+				ms <- resolver
+			}
+		},
+		func(resolver Resolver) {
+			_ips, err := resolver.LookupIP(host)
+			if err != nil {
+				log.Errorf("err:%v", err)
+			}
+
+			if len(_ips) == 0 {
+				return
+			}
+
+			lock.Lock()
+			m[resolver.Name()] = pie.SortUsing(_ips, func(a, b net.IP) bool {
+				return a.String() < b.String()
+			})
+			lock.Unlock()
+		},
+	)
+
+	return m
 }

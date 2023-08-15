@@ -7,6 +7,16 @@ import (
 
 type UdpClient struct {
 	client *net.Resolver
+	name   string
+}
+
+func (p *UdpClient) SetName(name string) Resolver {
+	p.name = name
+	return p
+}
+
+func (p *UdpClient) Name() string {
+	return p.name
 }
 
 func (p *UdpClient) LookupIP(host string) (ips []net.IP, err error) {
@@ -33,6 +43,7 @@ func NewUdpClient(addr string, dial Dial) *UdpClient {
 	}
 
 	return &UdpClient{
+		name: host,
 		client: &net.Resolver{
 			PreferGo:     true,
 			StrictErrors: true,

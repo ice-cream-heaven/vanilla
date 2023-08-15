@@ -13,6 +13,16 @@ import (
 
 type DohClient struct {
 	client *net.Resolver
+	name   string
+}
+
+func (p *DohClient) SetName(name string) Resolver {
+	p.name = name
+	return p
+}
+
+func (p *DohClient) Name() string {
+	return p.name
 }
 
 func (p *DohClient) LookupIP(host string) (ips []net.IP, err error) {
@@ -34,6 +44,7 @@ func NewDohClient(addr string, dial Dial) (*DohClient, error) {
 	}
 
 	return &DohClient{
+		name:   addr,
 		client: client,
 	}, nil
 }

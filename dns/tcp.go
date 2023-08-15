@@ -7,6 +7,16 @@ import (
 
 type TcpClient struct {
 	client *net.Resolver
+	name   string
+}
+
+func (p *TcpClient) SetName(name string) Resolver {
+	p.name = name
+	return p
+}
+
+func (p *TcpClient) Name() string {
+	return p.name
 }
 
 func (p *TcpClient) LookupIP(host string) (ips []net.IP, err error) {
@@ -33,6 +43,7 @@ func NewTcpClient(addr string, dial Dial) *TcpClient {
 	}
 
 	return &TcpClient{
+		name: host,
 		client: &net.Resolver{
 			PreferGo:     true,
 			StrictErrors: true,

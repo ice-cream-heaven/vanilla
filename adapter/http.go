@@ -68,7 +68,7 @@ func (p *Adapter) DialForDns(network, addr string) (net.Conn, error) {
 		meta.DNSMode = constant.DNSFakeIP
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
 	defer cancel()
 
 	return p.ProxyAdapter.DialContext(

@@ -2,12 +2,17 @@ package adapter
 
 import (
 	"crypto/sha512"
+	"errors"
 	"fmt"
 	"github.com/Dreamacro/clash/adapter/outbound"
 	"github.com/Dreamacro/clash/constant"
+	"github.com/elliotchance/pie/v2"
+	"github.com/ice-cream-heaven/log"
+	"github.com/ice-cream-heaven/utils/urlx"
 	"net"
 	"net/url"
 	"strconv"
+	"strings"
 )
 
 func (p *Adapter) UniqueId() string {
@@ -21,8 +26,93 @@ func (p *Adapter) ShortId() string {
 	return p.uniqueId[:8]
 }
 
-func (p *Adapter) updateUniqueId() error {
-	o := ToOption(p.opt)
+func (p *Adapter) updateUniqueId(src any) error {
+	var o any
+	if val, ok := src.(map[string]any); ok {
+		typ, ok := val["type"]
+		if !ok {
+			return errors.New("miss type")
+		}
+
+		var opt any
+		switch typ {
+		case "ss", "shadowsocks":
+			opt = &outbound.ShadowSocksOption{}
+
+		case "ssr", "shadowsocksr":
+			opt = &outbound.ShadowSocksROption{}
+
+		case "snell":
+			opt = &outbound.SnellOption{}
+
+		case "socks", "socks5", "socks4":
+			opt = &outbound.Socks5Option{}
+
+		case "http", "https":
+			opt = &outbound.HttpOption{}
+
+		case "vmess":
+			opt = &outbound.VmessOption{}
+
+		case "vless":
+			opt = &outbound.VlessOption{}
+
+		case "trojan":
+			opt = &outbound.TrojanOption{}
+
+		case "hysteria":
+			opt = &outbound.HysteriaOption{}
+
+		case "wireguard":
+			opt = &outbound.WireGuardOption{}
+
+		case "tuic":
+			opt = &outbound.TuicOption{}
+
+		case "direct":
+			opt = &outbound.Direct{}
+
+		case "reject":
+			opt = &outbound.Reject{}
+
+		default:
+			log.Errorf("invalid type: %s", typ)
+			return errors.New("invalid type")
+		}
+
+		err := decode(val, opt)
+		if err != nil {
+			return err
+		}
+
+		o = opt
+	} else {
+		o = src
+		var err error
+		p.opt, err = encode(src)
+		if err != nil {
+			return nil
+		}
+
+		if p.SupportUDP() {
+			p.opt["udp"] = true
+		} else {
+			delete(p.opt, "udp")
+		}
+
+		if p.SupportXUDP() {
+			p.opt["xudp"] = true
+		} else {
+			delete(p.opt, "xudp")
+		}
+
+		if p.SupportTFO() {
+			p.opt["tfo"] = true
+		} else {
+			delete(p.opt, "tfo")
+		}
+		p.opt["type"] = strings.ToLower(p.Type().String())
+	}
 
 	switch p.Type() {
 	case constant.Direct:
@@ -202,6 +292,48 @@ func (p *Adapter) updateUniqueId() error {
 		if opt.UUID != "" {
 			u.User = url.User(opt.UUID)
 		}
+
+		query := url.Values{}
+
+		if opt.ServerName != "" {
+			query.Set("sni", opt.ServerName)
+		}
+
+		if len(opt.HTTPOpts.Headers) > 0 {
+			if value, ok := opt.HTTPOpts.Headers["Host"]; ok && len(value) > 0 {
+				query.Set("http-host", strings.Join(pie.Sort(value), ","))
+			}
+		}
+
+		if len(opt.HTTPOpts.Path) > 0 {
+			query.Set("http-path", strings.Join(pie.Sort(opt.HTTPOpts.Path), ","))
+		}
+
+		if len(opt.HTTP2Opts.Host) > 0 {
+			query.Set("h2-host", strings.Join(pie.Sort(opt.HTTP2Opts.Host), ","))
+		}
+
+		if opt.HTTP2Opts.Path != "" {
+			query.Set("h2-path", opt.HTTP2Opts.Path)
+		}
+
+		if len(opt.WSOpts.Headers) > 0 {
+			if value, ok := opt.WSOpts.Headers["Host"]; ok && value != "" {
+				query.Set("ws-host", value)
+			}
+		}
+
+		if opt.WSOpts.Path != "" {
+			query.Set("ws-path", opt.WSOpts.Path)
+		}
+
+		if opt.GrpcOpts.GrpcServiceName != "" {
+			query.Set("grpc-service-name", opt.GrpcOpts.GrpcServiceName)
+		}
+
+		u.RawQuery = urlx.SortQuery(query).Encode()
+
+		log.Debug(u.String())
 
 		p.uniqueId = fmt.Sprintf("%x", sha512.Sum512([]byte(u.String())))
 

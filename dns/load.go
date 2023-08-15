@@ -8,6 +8,9 @@ import (
 )
 
 type Resolver interface {
+	Name() string
+	SetName(name string) Resolver
+
 	LookupIP(host string) (ips []net.IP, err error)
 	LookupIPv4(host string) (ips []net.IP, err error)
 	LookupIPv6(host string) (ips []net.IP, err error)
@@ -16,7 +19,11 @@ type Resolver interface {
 type Dial func(network, address string) (net.Conn, error)
 
 func MustNewResolver(addr string) Resolver {
-	res, err := NewResolverWithProxy(addr, nil)
+	return MustNewResolverWithProxy(addr, nil)
+}
+
+func MustNewResolverWithProxy(addr string, dial Dial) Resolver {
+	res, err := NewResolverWithProxy(addr, dial)
 	if err != nil {
 		log.Panicf("err:%v", err)
 	}
