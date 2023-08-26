@@ -303,7 +303,6 @@ func encode(src any) (map[string]any, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	return dst, nil
 }
 

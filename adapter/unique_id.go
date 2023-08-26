@@ -27,6 +27,21 @@ func (p *Adapter) ShortId() string {
 }
 
 func (p *Adapter) updateUniqueId(src any) error {
+	switch p.Type() {
+	case constant.Direct:
+		p.uniqueId = "direct"
+		p.opt = map[string]any{
+			"type": "direct",
+		}
+		return nil
+	case constant.Reject:
+		p.uniqueId = "reject"
+		p.opt = map[string]any{
+			"type": "reject",
+		}
+		return nil
+	}
+
 	var o any
 	if val, ok := src.(map[string]any); ok {
 		typ, ok := val["type"]
@@ -80,7 +95,7 @@ func (p *Adapter) updateUniqueId(src any) error {
 			return errors.New("invalid type")
 		}
 
-		err := decode(val, opt)
+		err := decoder.Decode(val, opt)
 		if err != nil {
 			return err
 		}
@@ -88,10 +103,11 @@ func (p *Adapter) updateUniqueId(src any) error {
 		o = opt
 	} else {
 		o = src
+
 		var err error
 		p.opt, err = encode(src)
 		if err != nil {
-			return nil
+			return err
 		}
 
 		if p.SupportUDP() {
@@ -115,12 +131,6 @@ func (p *Adapter) updateUniqueId(src any) error {
 	}
 
 	switch p.Type() {
-	case constant.Direct:
-		p.uniqueId = "direct"
-
-	case constant.Reject:
-		p.uniqueId = "reject"
-
 	case constant.Shadowsocks:
 		var opt *outbound.ShadowSocksOption
 		switch x := o.(type) {
@@ -332,8 +342,6 @@ func (p *Adapter) updateUniqueId(src any) error {
 		}
 
 		u.RawQuery = urlx.SortQuery(query).Encode()
-
-		log.Debug(u.String())
 
 		p.uniqueId = fmt.Sprintf("%x", sha512.Sum512([]byte(u.String())))
 

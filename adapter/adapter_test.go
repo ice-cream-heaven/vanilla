@@ -1,14 +1,11 @@
 package adapter_test
 
 import (
-	"github.com/AdguardTeam/gomitmproxy"
 	"github.com/ice-cream-heaven/vanilla/adapter"
 	"gopkg.in/yaml.v3"
 	"io"
-	"net"
 	"net/http"
 	"net/url"
-	"os"
 	"testing"
 )
 
@@ -19,11 +16,14 @@ func TestHttp(t *testing.T) {
 		return
 	}
 
+	request.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "+
+		"(KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+
 	client := &http.Client{
 		Transport: &http.Transport{
 			Proxy: http.ProxyURL(&url.URL{
 				Scheme: "http",
-				Host:   "127.0.0.1:10909",
+				Host:   "127.0.0.1:7891",
 			}),
 			//TLSClientConfig: &tls.Config{
 			//	InsecureSkipVerify: true,
@@ -50,35 +50,6 @@ func TestHttp(t *testing.T) {
 }
 
 func TestMitm(t *testing.T) {
-	go func() {
-		err := gomitmproxy.NewProxy(gomitmproxy.Config{
-			ListenAddr: &net.TCPAddr{
-				IP:   net.IPv4(0, 0, 0, 0),
-				Port: 8080,
-			},
-			TLSConfig:      nil,
-			MITMConfig:     nil,
-			MITMExceptions: nil,
-			OnConnect: func(session *gomitmproxy.Session, proto string, addr string) net.Conn {
-				t.Logf("OnConnect session:%v proto:%v addr:%v", session.ID(), proto, addr)
-				return nil
-			},
-			OnRequest: func(session *gomitmproxy.Session) (*http.Request, *http.Response) {
-				t.Log(session.Request().URL)
-				t.Log(session.Request().Header)
-				return nil, nil
-			},
-			OnResponse: nil,
-			OnError: func(session *gomitmproxy.Session, err error) {
-				t.Errorf("%s err:%v", session.ID(), err)
-			},
-		}).Start()
-		if err != nil {
-			t.Errorf("err:%v", err)
-			os.Exit(1)
-		}
-	}()
-
 	request, err := http.NewRequest(http.MethodGet, "https://www.baidu.com", nil)
 	if err != nil {
 		t.Errorf("err:%v", err)
@@ -89,7 +60,7 @@ func TestMitm(t *testing.T) {
 		Transport: &http.Transport{
 			Proxy: http.ProxyURL(&url.URL{
 				Scheme: "http",
-				Host:   "127.0.0.1:8080",
+				Host:   "127.0.0.1:7891",
 			}),
 		},
 	}

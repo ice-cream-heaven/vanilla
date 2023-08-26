@@ -10,8 +10,29 @@ import (
 	"net"
 	"net/http"
 	"net/netip"
+	"strconv"
 	"time"
 )
+
+func dialContext2Metadata(network, addr string) *constant.Metadata {
+	meta := &constant.Metadata{}
+	switch network {
+	case "tcp", "tcp4", "tcp6":
+		meta.NetWork = constant.TCP
+	case "udp", "udp4", "udp6":
+		meta.NetWork = constant.UDP
+	default:
+		meta.NetWork = constant.InvalidNet
+	}
+
+	var portStr string
+	meta.Host, portStr, _ = net.SplitHostPort(addr)
+
+	port, _ := strconv.ParseUint(portStr, 10, 16)
+	meta.DstPort = uint16(port)
+
+	return meta
+}
 
 func (p *Adapter) dnsQuery(host string) (ip netip.Addr) {
 	switch p.dnsMode {
@@ -51,17 +72,7 @@ func (p *Adapter) HttpDial(network, addr string) (net.Conn, error) {
 }
 
 func (p *Adapter) DialForDns(network, addr string) (net.Conn, error) {
-	meta := &constant.Metadata{}
-	switch network {
-	case "tcp", "tcp4", "tcp6":
-		meta.NetWork = constant.TCP
-	case "udp", "udp4", "udp6":
-		meta.NetWork = constant.UDP
-	default:
-		meta.NetWork = constant.InvalidNet
-	}
-
-	meta.Host, meta.DstPort, _ = net.SplitHostPort(addr)
+	meta := dialContext2Metadata(network, addr)
 	meta.DstIP = p.dnsQuery(meta.Host)
 	if meta.DstIP.IsValid() {
 		meta.Host = ""
@@ -81,17 +92,7 @@ func (p *Adapter) DialForDns(network, addr string) (net.Conn, error) {
 }
 
 func (p *Adapter) HttpDialContext(ctx context.Context, network, addr string) (net.Conn, error) {
-	meta := &constant.Metadata{}
-	switch network {
-	case "tcp", "tcp4", "tcp6":
-		meta.NetWork = constant.TCP
-	case "udp", "udp4", "udp6":
-		meta.NetWork = constant.UDP
-	default:
-		meta.NetWork = constant.InvalidNet
-	}
-
-	meta.Host, meta.DstPort, _ = net.SplitHostPort(addr)
+	meta := dialContext2Metadata(network, addr)
 	meta.DstIP = p.dnsQuery(meta.Host)
 	if meta.DstIP.IsValid() {
 		meta.Host = ""
@@ -102,17 +103,7 @@ func (p *Adapter) HttpDialContext(ctx context.Context, network, addr string) (ne
 }
 
 func (p *Adapter) HttpDialDialer(ctx context.Context, network, addr string, opts ...dialer.Option) (net.Conn, error) {
-	meta := &constant.Metadata{}
-	switch network {
-	case "tcp", "tcp4", "tcp6":
-		meta.NetWork = constant.TCP
-	case "udp", "udp4", "udp6":
-		meta.NetWork = constant.UDP
-	default:
-		meta.NetWork = constant.InvalidNet
-	}
-
-	meta.Host, meta.DstPort, _ = net.SplitHostPort(addr)
+	meta := dialContext2Metadata(network, addr)
 	meta.DstIP = p.dnsQuery(meta.Host)
 	if meta.DstIP.IsValid() {
 		meta.Host = ""
