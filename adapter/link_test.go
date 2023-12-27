@@ -36,8 +36,11 @@ func TestParseLink(t *testing.T) {
 			name: "vmess://ew0KICAidiI6ICIyIiwNCiAgInBzIjogIvCfh7rwn4e4IOe+juWbvTA244CQ57K+6YCJ44CRIiwNCiAgImFkZCI6ICJjZG4ud3hmei50ayIsDQogICJwb3J0IjogIjgwIiwNCiAgImlkIjogIjExMTExZTMwLTUxZTctNGJiZS1hOGY2LTljMTgzNGI2NmM4ZCIsDQogICJhaWQiOiAiMCIsDQogICJzY3kiOiAiYXV0byIsDQogICJuZXQiOiAid3MiLA0KICAidHlwZSI6ICJub25lIiwNCiAgImhvc3QiOiAidXMwNi5jY3R2dmlwLmNmIiwNCiAgInBhdGgiOiAiL2NjdHYxMy5tM3U4IiwNCiAgInRscyI6ICIiLA0KICAic25pIjogIiIsDQogICJhbHBuIjogIiIsDQogICJmcCI6ICIiDQp9",
 		},
 		{
+			name: "vmess://ew0KICAidiI6ICIyIiwNCiAgInBzIjogIue+juWbvTAxIiwNCiAgImFkZCI6ICJ1czEuemliaWUubGluayIsDQogICJwb3J0IjogIjIwODYiLA0KICAiaWQiOiAiNjFmYTg4MGUtOWYzMC00NzU5LTlmMTktNDVlNmQ0YTU0OTQ5IiwNCiAgImFpZCI6ICIwIiwNCiAgInNjeSI6ICJhdXRvIiwNCiAgIm5ldCI6ICJ3cyIsDQogICJ0eXBlIjogIm5vbmUiLA0KICAiaG9zdCI6ICJ1czEudHV5b3lvLmxpbmsiLA0KICAicGF0aCI6ICIvdHV5b3lvbG92ZWV2ZXJ5b25lIiwNCiAgInRscyI6ICJub25lIiwNCiAgInNuaSI6ICIiLA0KICAiYWxwbiI6ICIiLA0KICAiZnAiOiAiIg0KfQ==",
+		},
+		{
 			name: "vmess",
-			link: "vmess://ew0KICAidiI6ICIyIiwNCiAgInBzIjogIue+juWbvTAxIiwNCiAgImFkZCI6ICJ1czEuemliaWUubGluayIsDQogICJwb3J0IjogIjIwODYiLA0KICAiaWQiOiAiNjFmYTg4MGUtOWYzMC00NzU5LTlmMTktNDVlNmQ0YTU0OTQ5IiwNCiAgImFpZCI6ICIwIiwNCiAgInNjeSI6ICJhdXRvIiwNCiAgIm5ldCI6ICJ3cyIsDQogICJ0eXBlIjogIm5vbmUiLA0KICAiaG9zdCI6ICJ1czEudHV5b3lvLmxpbmsiLA0KICAicGF0aCI6ICIvdHV5b3lvbG92ZWV2ZXJ5b25lIiwNCiAgInRscyI6ICJub25lIiwNCiAgInNuaSI6ICIiLA0KICAiYWxwbiI6ICIiLA0KICAiZnAiOiAiIg0KfQ==",
+			link: "vmess://ew0KICAidiI6ICIyIiwNCiAgInBzIjogImJmMzBjODdmMDMyMHwxNjIuMTU5LjM4LjEzNiIsDQogICJhZGQiOiAiMTYyLjE1OS4zOC4xMzYiLA0KICAicG9ydCI6ICI4MCIsDQogICJpZCI6ICI2MGJlNWRkYi1jOWYxLTQ4ZWMtYjBlZS1mNmJkNDM2NGIzY2UiLA0KICAiYWlkIjogIjAiLA0KICAic2N5IjogImF1dG8iLA0KICAibmV0IjogIndzIiwNCiAgInR5cGUiOiAibm9uZSIsDQogICJob3N0IjogImNjcy5ob3N0bWpqLmNvbSIsDQogICJwYXRoIjogIi8iLA0KICAidGxzIjogIiIsDQogICJzbmkiOiAiIiwNCiAgImFscG4iOiAiIiwNCiAgImZwIjogIiINCn0=\n",
 			net:  true,
 		},
 	}
@@ -63,8 +66,6 @@ func TestParseLink(t *testing.T) {
 					return
 				}
 
-				return
-
 				resp, err := got.R().Get("https://www.google.com/generate_204")
 				if err != nil {
 					t.Errorf("err:%v", err)
@@ -75,6 +76,8 @@ func TestParseLink(t *testing.T) {
 					t.Errorf("%s status code:%d", tt.name, resp.StatusCode())
 					return
 				}
+
+				t.Log("ok")
 			}
 		})
 	}

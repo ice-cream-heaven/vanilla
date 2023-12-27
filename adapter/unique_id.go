@@ -4,11 +4,12 @@ import (
 	"crypto/sha512"
 	"errors"
 	"fmt"
-	"github.com/Dreamacro/clash/adapter/outbound"
-	"github.com/Dreamacro/clash/constant"
 	"github.com/elliotchance/pie/v2"
 	"github.com/ice-cream-heaven/log"
 	"github.com/ice-cream-heaven/utils/urlx"
+	"github.com/metacubex/mihomo/adapter/outbound"
+	"github.com/metacubex/mihomo/common/structure"
+	"github.com/metacubex/mihomo/constant"
 	"net"
 	"net/url"
 	"strconv"
@@ -24,6 +25,24 @@ func (p *Adapter) ShortId() string {
 		return p.uniqueId
 	}
 	return p.uniqueId[:8]
+}
+
+func (p *Adapter) String() string {
+	b := log.GetBuffer()
+	defer log.PutBuffer(b)
+
+	switch p.Type() {
+	case constant.Direct:
+		b.WriteString("direct://localhost")
+	case constant.Reject:
+		b.WriteString("reject://black-hole")
+	default:
+		b.WriteString(strings.ToLower(p.Type().String()))
+		b.WriteString("://")
+		b.WriteString(p.Addr())
+	}
+
+	return b.String()
 }
 
 func (p *Adapter) updateUniqueId(src any) error {
@@ -145,6 +164,7 @@ func (p *Adapter) updateUniqueId(src any) error {
 		u := &url.URL{
 			Scheme: "ss",
 		}
+		query := u.Query()
 
 		if opt.Port > 0 {
 			u.Host = net.JoinHostPort(opt.Server, strconv.Itoa(opt.Port))
@@ -156,6 +176,49 @@ func (p *Adapter) updateUniqueId(src any) error {
 			u.User = url.User(opt.Password)
 		}
 
+		if opt.Plugin != "" {
+			query.Set("plugin", opt.Plugin)
+
+			decoder := structure.NewDecoder(structure.Option{TagName: "obfs", WeaklyTypedInput: true})
+
+			switch opt.Plugin {
+			case "obfs":
+				o := simpleObfsOption{Host: "bing.com"}
+				err := decoder.Decode(opt.PluginOpts, &o)
+				if err != nil {
+					log.Errorf("err:%v", err)
+					return err
+				}
+
+				query.Set("obfs-mode", o.Mode)
+				query.Set("obfs-host", o.Host)
+
+			case "v2ray-plugin":
+				o := v2rayObfsOption{Host: "bing.com", Mux: true}
+				err := decoder.Decode(opt.PluginOpts, &o)
+				if err != nil {
+					log.Errorf("err:%v", err)
+					return err
+				}
+
+				query.Set("obfs-mode", o.Mode)
+				query.Set("obfs-host", o.Host)
+				query.Set("obfs-path", o.Path)
+				if o.TLS {
+					query.Set("obfs-tls", "true")
+				}
+				if o.Mux {
+					query.Set("mux", "true")
+				}
+				if len(o.Headers) > 0 {
+					for k, v := range o.Headers {
+						query.Set("obfs-header."+k, v)
+					}
+				}
+			}
+		}
+
+		u.RawQuery = urlx.SortQuery(query).Encode()
 		p.uniqueId = fmt.Sprintf("%x", sha512.Sum512([]byte(u.String())))
 
 	case constant.ShadowsocksR:
@@ -172,6 +235,7 @@ func (p *Adapter) updateUniqueId(src any) error {
 		u := &url.URL{
 			Scheme: "ssr",
 		}
+		query := u.Query()
 
 		if opt.Port > 0 {
 			u.Host = net.JoinHostPort(opt.Server, strconv.Itoa(opt.Port))
@@ -183,6 +247,27 @@ func (p *Adapter) updateUniqueId(src any) error {
 			u.User = url.User(opt.Password)
 		}
 
+		if opt.Cipher != "" {
+			query.Set("cipher", opt.Cipher)
+		}
+
+		if opt.Obfs != "" {
+			query.Set("obfs", opt.Obfs)
+		}
+
+		if opt.ObfsParam != "" {
+			query.Set("obfs-param", opt.ObfsParam)
+		}
+
+		if opt.Protocol != "" {
+			query.Set("protocol", opt.Protocol)
+		}
+
+		if opt.ProtocolParam != "" {
+			query.Set("protocol-param", opt.ProtocolParam)
+		}
+
+		u.RawQuery = urlx.SortQuery(query).Encode()
 		p.uniqueId = fmt.Sprintf("%x", sha512.Sum512([]byte(u.String())))
 
 	case constant.Snell:
@@ -386,6 +471,7 @@ func (p *Adapter) updateUniqueId(src any) error {
 		u := &url.URL{
 			Scheme: "trojan",
 		}
+		query := u.Query()
 
 		if opt.Port > 0 {
 			u.Host = net.JoinHostPort(opt.Server, strconv.Itoa(opt.Port))
@@ -397,6 +483,25 @@ func (p *Adapter) updateUniqueId(src any) error {
 			u.User = url.User(opt.Password)
 		}
 
+		if opt.Network != "" {
+			query.Set("net", opt.Network)
+		}
+
+		if opt.GrpcOpts.GrpcServiceName != "" {
+			query.Set("grpc-service-name", opt.GrpcOpts.GrpcServiceName)
+		}
+
+		if len(opt.WSOpts.Headers) > 0 {
+			if value, ok := opt.WSOpts.Headers["Host"]; ok && value != "" {
+				query.Set("ws-host", value)
+			}
+		}
+
+		if opt.WSOpts.Path != "" {
+			query.Set("ws-path", opt.WSOpts.Path)
+		}
+
+		u.RawQuery = urlx.SortQuery(query).Encode()
 		p.uniqueId = fmt.Sprintf("%x", sha512.Sum512([]byte(u.String())))
 
 	case constant.Hysteria:
@@ -489,4 +594,19 @@ func (p *Adapter) updateUniqueId(src any) error {
 	}
 
 	return nil
+}
+
+type simpleObfsOption struct {
+	Mode string `obfs:"mode,omitempty"`
+	Host string `obfs:"host,omitempty"`
+}
+
+type v2rayObfsOption struct {
+	Mode           string            `obfs:"mode"`
+	Host           string            `obfs:"host,omitempty"`
+	Path           string            `obfs:"path,omitempty"`
+	TLS            bool              `obfs:"tls,omitempty"`
+	Headers        map[string]string `obfs:"headers,omitempty"`
+	SkipCertVerify bool              `obfs:"skip-cert-verify,omitempty"`
+	Mux            bool              `obfs:"mux,omitempty"`
 }

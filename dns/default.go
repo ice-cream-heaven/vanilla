@@ -2,10 +2,10 @@ package dns
 
 import (
 	"errors"
-	"github.com/Dreamacro/clash/common/cache"
 	"github.com/elliotchance/pie/v2"
 	"github.com/ice-cream-heaven/log"
 	"github.com/ice-cream-heaven/utils/wait"
+	"github.com/ice-cream-heaven/vanilla/cache"
 	"net"
 	"sync"
 	"time"

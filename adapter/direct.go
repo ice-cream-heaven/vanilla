@@ -1,8 +1,8 @@
 package adapter
 
 import (
-	"github.com/Dreamacro/clash/adapter/outbound"
-	"github.com/Dreamacro/clash/constant"
+	"github.com/metacubex/mihomo/adapter/outbound"
+	"github.com/metacubex/mihomo/constant"
 )
 
 type ProxyDirect struct {

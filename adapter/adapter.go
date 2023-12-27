@@ -2,13 +2,14 @@ package adapter
 
 import (
 	"fmt"
-	"github.com/Dreamacro/clash/constant"
-	"github.com/bytedance/sonic"
 	"github.com/elliotchance/pie/v2"
 	"github.com/go-resty/resty/v2"
 	"github.com/ice-cream-heaven/log"
+	"github.com/ice-cream-heaven/utils/json"
 	"github.com/ice-cream-heaven/vanilla/dns"
+	"github.com/metacubex/mihomo/constant"
 	"golang.org/x/exp/maps"
+	"net"
 	"time"
 )
 
@@ -60,8 +61,8 @@ func NewAdapter(c constant.ProxyAdapter, o any) (*Adapter, error) {
 	}
 
 	{
-		p.client.JSONUnmarshal = sonic.Unmarshal
-		p.client.JSONMarshal = sonic.Marshal
+		p.client.JSONUnmarshal = json.Unmarshal
+		p.client.JSONMarshal = json.Marshal
 		p.client.SetTransport(p.Transport()).
 			SetLogger(log.Clone().SetPrefixMsg(fmt.Sprintf("vanilla[%s]", p.ShortId())))
 	}
@@ -98,6 +99,11 @@ func NewAdapter(c constant.ProxyAdapter, o any) (*Adapter, error) {
 //
 //	return nil
 //}
+
+func (p *Adapter) Hostname() string {
+	host, _, _ := net.SplitHostPort(p.Addr())
+	return host
+}
 
 func (p *Adapter) DnsMode(m DnsMode, nameservers ...string) *Adapter {
 	p.dnsMode = m

@@ -2,11 +2,11 @@ package adapter
 
 import (
 	"errors"
-	"github.com/Dreamacro/clash/adapter"
-	"github.com/Dreamacro/clash/adapter/outbound"
 	"github.com/elliotchance/pie/v2"
 	"github.com/ice-cream-heaven/log"
-	"github.com/ice-cream-heaven/utils"
+	"github.com/ice-cream-heaven/utils/anyx"
+	"github.com/metacubex/mihomo/adapter"
+	"github.com/metacubex/mihomo/adapter/outbound"
 	"net/url"
 	"strconv"
 	"strings"
@@ -23,7 +23,7 @@ func ParseLink(s string) (*Adapter, error) {
 	u, err := url.Parse(s)
 	if err != nil {
 		log.Debugf("err:%v", err)
-		return nil, err
+		return ParseClashWithYaml([]byte(s))
 	}
 
 	switch u.Scheme {
@@ -478,7 +478,7 @@ func ParseLinkVless(s string) (*Adapter, error) {
 func ParseLinkVmess(s string) (*Adapter, error) {
 	var opt outbound.VmessOption
 	base64Str := Base64Decode(strings.TrimPrefix(s, "vmess://"))
-	m, err := utils.NewMapWithJson([]byte(base64Str))
+	m, err := anyx.NewMapWithJson([]byte(base64Str))
 	if err != nil {
 		log.Debugf("err:%v", err)
 
@@ -523,7 +523,7 @@ func ParseLinkVmess(s string) (*Adapter, error) {
 			BasicOption: outbound.BasicOption{},
 			Name:        u.Query().Get("remarks"),
 			Server:      u.Hostname(),
-			Port:        utils.ToInt(u.Port()),
+			Port:        anyx.ToInt(u.Port()),
 			UUID: func() string {
 				pwd, ok := u.User.Password()
 				if ok {
@@ -542,9 +542,6 @@ func ParseLinkVmess(s string) (*Adapter, error) {
 			UDP:            true,
 			Network:        network,
 			SkipCertVerify: true,
-			HTTPOpts:       outbound.HTTPOptions{},
-			HTTP2Opts:      outbound.HTTP2Options{},
-			GrpcOpts:       outbound.GrpcOptions{},
 			WSOpts:         wsOpts,
 		}
 
@@ -552,7 +549,7 @@ func ParseLinkVmess(s string) (*Adapter, error) {
 		switch tls {
 		case "none":
 		default:
-			opt.TLS = utils.ToBool(tls)
+			opt.TLS = anyx.ToBool(tls)
 		}
 
 	} else {
@@ -584,15 +581,15 @@ func ParseLinkVmess(s string) (*Adapter, error) {
 					return false
 				}
 
-				switch utils.CheckValueType(val) {
-				case utils.ValueString:
+				switch anyx.CheckValueType(val) {
+				case anyx.ValueString:
 					switch m.GetString("tls") {
 					case "none", "":
 						return false
 					default:
 						return true
 					}
-				case utils.ValueBool:
+				case anyx.ValueBool:
 					return m.GetBool("tls")
 				default:
 					return false

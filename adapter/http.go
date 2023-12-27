@@ -2,11 +2,11 @@ package adapter
 
 import (
 	"context"
-	"github.com/Dreamacro/clash/component/dialer"
-	"github.com/Dreamacro/clash/constant"
 	"github.com/go-resty/resty/v2"
 	"github.com/ice-cream-heaven/log"
 	"github.com/ice-cream-heaven/vanilla/dns"
+	"github.com/metacubex/mihomo/component/dialer"
+	"github.com/metacubex/mihomo/constant"
 	"net"
 	"net/http"
 	"net/netip"

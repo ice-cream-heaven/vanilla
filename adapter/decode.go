@@ -3,8 +3,8 @@ package adapter
 import (
 	"encoding/base64"
 	"fmt"
-	"github.com/Dreamacro/clash/adapter/outbound"
 	"github.com/ice-cream-heaven/log"
+	"github.com/metacubex/mihomo/adapter/outbound"
 	"reflect"
 	"strings"
 )
