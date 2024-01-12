@@ -17,7 +17,7 @@ func ParseSubscription(b []byte) (nodes []*Adapter) {
 			for _, m := range c.Proxies {
 				node, err := ParseClash(m)
 				if err != nil {
-					log.Debugf("err:%v", err)
+					log.Errorf("err:%v", err)
 					continue
 				}
 				nodes = append(nodes, node)
@@ -31,7 +31,7 @@ func ParseSubscription(b []byte) (nodes []*Adapter) {
 		for _, link := range strings.Split(Base64Decode(string(b)), "\n") {
 			node, err := ParseLink(link)
 			if err != nil {
-				log.Debugf("err:%v", err)
+				log.Errorf("err:%v", err)
 				continue
 			}
 

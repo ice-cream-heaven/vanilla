@@ -42,7 +42,10 @@ func (p *Adapter) dnsQuery(host string) (ip netip.Addr) {
 		ip, _ = netip.ParseAddr(host)
 		if !ip.IsValid() {
 			_ip, _ := dns.DefaultResolver.LookupHost(host)
-			ip = netip.AddrFrom4([4]byte(_ip))
+			if _ip != nil {
+				ip = netip.AddrFrom4([4]byte(_ip))
+				log.Debugf("use default dns:%v", ip)
+			}
 		}
 	case DnsRemote:
 		ip, _ = netip.ParseAddr(host)
@@ -62,6 +65,8 @@ func (p *Adapter) dnsQuery(host string) (ip netip.Addr) {
 				break
 			}
 		}
+
+		log.Debugf("use remote dns:%v", ip)
 	}
 
 	return
@@ -120,9 +125,7 @@ func (p *Adapter) Transport() http.RoundTripper {
 }
 
 func (p *Adapter) GetClient() *http.Client {
-	return &http.Client{
-		Transport: p.Transport(),
-	}
+	return p.client.GetClient()
 }
 
 func (p *Adapter) GetClientWithTimeout(timeout time.Duration) *http.Client {

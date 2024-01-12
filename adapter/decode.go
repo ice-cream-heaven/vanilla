@@ -64,7 +64,7 @@ func decodeSlice(dst []any, src any) error {
 			m := map[string]any{}
 			err := decodeMap(m, lv.Interface())
 			if err != nil {
-				log.Debugf("err:%v", err)
+				log.Errorf("err:%v", err)
 				return err
 			}
 			if len(m) == 0 {
@@ -75,7 +75,7 @@ func decodeSlice(dst []any, src any) error {
 			var l []any
 			err := decodeSlice(l, lv.Interface())
 			if err != nil {
-				log.Debugf("err:%v", err)
+				log.Errorf("err:%v", err)
 				return err
 			}
 			if len(l) == 0 {
@@ -91,7 +91,7 @@ func decodeSlice(dst []any, src any) error {
 			m := map[string]any{}
 			err := decode(m, lv.Interface())
 			if err != nil {
-				log.Debugf("err:%v", err)
+				log.Errorf("err:%v", err)
 				return err
 			}
 			if len(m) == 0 {
@@ -155,7 +155,7 @@ func decodeMap(dst map[string]any, src any) error {
 			m := map[string]any{}
 			err := decodeMap(m, mv.Interface())
 			if err != nil {
-				log.Debugf("err:%v", err)
+				log.Errorf("err:%v", err)
 				return err
 			}
 			if !whiteTag[mk] && len(m) == 0 {
@@ -166,7 +166,7 @@ func decodeMap(dst map[string]any, src any) error {
 			var l []any
 			err := decodeSlice(l, mv.Interface())
 			if err != nil {
-				log.Debugf("err:%v", err)
+				log.Errorf("err:%v", err)
 				return err
 			}
 			if !whiteTag[mk] && len(l) == 0 {
@@ -182,7 +182,7 @@ func decodeMap(dst map[string]any, src any) error {
 			m := map[string]any{}
 			err := decode(m, mv.Interface())
 			if err != nil {
-				log.Debugf("err:%v", err)
+				log.Errorf("err:%v", err)
 				return err
 			}
 			if !whiteTag[mk] && len(m) == 0 {

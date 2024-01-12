@@ -22,7 +22,7 @@ func ParseLink(s string) (*Adapter, error) {
 
 	u, err := url.Parse(s)
 	if err != nil {
-		log.Debugf("err:%v", err)
+		log.Errorf("err:%v", err)
 		return ParseClashWithYaml([]byte(s))
 	}
 
@@ -37,11 +37,11 @@ func ParseLink(s string) (*Adapter, error) {
 		return ParseLinkVless(s)
 	case "vmess":
 		return ParseLinkVmess(s)
-	case "ss":
+	case "ss", "shadowsocks":
 		return ParseLinkSS(s)
 	case "ssr":
 		return ParseLinkSSR(s)
-	case "hysteria":
+	case "hysteria", "hy", "hy2":
 		return ParseHysteria(s)
 	default:
 		log.Debugf("unsupport v2ray scheme:%s(%s)", u.Scheme, s)
@@ -53,7 +53,7 @@ func ParseHysteria(s string) (*Adapter, error) {
 	u, err := url.Parse(s)
 	if err != nil {
 		log.Errorf("err:%v", err)
-		return nil, err
+		return nil, ErrParseLink
 	}
 
 	//hysteria://152.69.208.195:18209?protocol=udp&auth=d50157&peer=www.bing.com&insecure=true&upmbps=10&downmbps=50&alpn=h3#hysteria-ygkkk
@@ -113,7 +113,7 @@ func ParseHysteria(s string) (*Adapter, error) {
 	log.Debugf("hysteria opt:%+v", opt)
 	at, err := outbound.NewHysteria(opt)
 	if err != nil {
-		log.Debugf("err:%v", err)
+		log.Errorf("err:%v", err)
 		return nil, err
 	}
 
@@ -143,7 +143,7 @@ func ParseLinkSSR(s string) (*Adapter, error) {
 
 	m, err := url.ParseQuery(suffix[1])
 	if err != nil {
-		return nil, err
+		return nil, ErrParseLink
 	}
 
 	var obfsParam, protocolParam, name string
@@ -199,7 +199,7 @@ func ParseLinkSSR(s string) (*Adapter, error) {
 
 	at, err := outbound.NewShadowSocksR(opt)
 	if err != nil {
-		log.Debugf("err:%v", err)
+		log.Errorf("err:%v", err)
 		return nil, err
 	}
 
@@ -211,7 +211,7 @@ func ParseLinkSS(s string) (*Adapter, error) {
 	var fragment string
 	bu, err := url.Parse(s)
 	if err != nil {
-		log.Debugf("err:%v", err)
+		log.Errorf("err:%v", err)
 		urlStr = "ss://" + Base64Decode(strings.TrimPrefix(s, "ss://"))
 	} else {
 		fragment = bu.Fragment
@@ -223,8 +223,8 @@ func ParseLinkSS(s string) (*Adapter, error) {
 
 	u, err := url.Parse(urlStr)
 	if err != nil {
-		log.Debugf("err:%v", err)
-		return nil, err
+		log.Errorf("err:%v", err)
+		return nil, ErrParseLink
 	}
 
 	if fragment == "" {
@@ -264,7 +264,7 @@ func ParseLinkSS(s string) (*Adapter, error) {
 
 	at, err := outbound.NewShadowSocks(opt)
 	if err != nil {
-		log.Debugf("err:%v", err)
+		log.Errorf("err:%v", err)
 		return nil, err
 	}
 
@@ -274,8 +274,8 @@ func ParseLinkSS(s string) (*Adapter, error) {
 func ParseLinkHttp(s string) (*Adapter, error) {
 	u, err := url.Parse(s)
 	if err != nil {
-		log.Debugf("err:%v", err)
-		return nil, err
+		log.Errorf("err:%v", err)
+		return nil, ErrParseLink
 	}
 
 	port, _ := strconv.Atoi(u.Port())
@@ -301,7 +301,7 @@ func ParseLinkHttp(s string) (*Adapter, error) {
 
 	at, err := outbound.NewHttp(opt)
 	if err != nil {
-		log.Debugf("err:%v", err)
+		log.Errorf("err:%v", err)
 		return nil, err
 	}
 
@@ -311,8 +311,8 @@ func ParseLinkHttp(s string) (*Adapter, error) {
 func ParseLinkSocket5(s string) (*Adapter, error) {
 	u, err := url.Parse(s)
 	if err != nil {
-		log.Debugf("err:%v", err)
-		return nil, err
+		log.Errorf("err:%v", err)
+		return nil, ErrParseLink
 	}
 
 	port, _ := strconv.Atoi(u.Port())
@@ -334,7 +334,7 @@ func ParseLinkSocket5(s string) (*Adapter, error) {
 
 	at, err := outbound.NewSocks5(opt)
 	if err != nil {
-		log.Debugf("err:%v", err)
+		log.Errorf("err:%v", err)
 		return nil, err
 	}
 
@@ -344,8 +344,8 @@ func ParseLinkSocket5(s string) (*Adapter, error) {
 func ParseLinkTrojan(s string) (*Adapter, error) {
 	u, err := url.Parse(s)
 	if err != nil {
-		log.Debugf("err:%v", err)
-		return nil, err
+		log.Errorf("err:%v", err)
+		return nil, ErrParseLink
 	}
 
 	sni := u.Query().Get("sni")
@@ -407,7 +407,7 @@ func ParseLinkTrojan(s string) (*Adapter, error) {
 
 	at, err := outbound.NewTrojan(opt)
 	if err != nil {
-		log.Debugf("err:%v", err)
+		log.Errorf("err:%v", err)
 		return nil, err
 	}
 
@@ -417,8 +417,8 @@ func ParseLinkTrojan(s string) (*Adapter, error) {
 func ParseLinkVless(s string) (*Adapter, error) {
 	u, err := url.Parse(s)
 	if err != nil {
-		log.Debugf("err:%v", err)
-		return nil, err
+		log.Errorf("err:%v", err)
+		return nil, ErrParseLink
 	}
 
 	sni := u.Query().Get("sni")
@@ -468,7 +468,7 @@ func ParseLinkVless(s string) (*Adapter, error) {
 
 	at, err := outbound.NewVless(opt)
 	if err != nil {
-		log.Debugf("err:%v", err)
+		log.Errorf("err:%v", err)
 		return nil, err
 	}
 
@@ -484,24 +484,22 @@ func ParseLinkVmess(s string) (*Adapter, error) {
 
 		u, err := url.Parse(s)
 		if err != nil {
-			log.Debugf("err:%v", err)
-			return nil, err
+			log.Errorf("err:%v", err)
+			return nil, ErrParseLink
 		} else {
 			u.Host = Base64Decode(u.Host)
 		}
 
-		log.Info(u.Host)
-
 		urlStr, err := url.QueryUnescape(u.String())
 		if err != nil {
-			log.Debugf("err:%v", err)
+			log.Errorf("err:%v", err)
 			return nil, err
 		}
 
 		u, err = url.Parse(urlStr)
 		if err != nil {
-			log.Debugf("err:%v", err)
-			return nil, err
+			log.Errorf("err:%v", err)
+			return nil, ErrParseLink
 		}
 
 		var wsOpts outbound.WSOptions
@@ -637,7 +635,7 @@ func ParseLinkVmess(s string) (*Adapter, error) {
 
 	at, err := outbound.NewVmess(opt)
 	if err != nil {
-		log.Debugf("err:%v", err)
+		log.Errorf("err:%v", err)
 		return nil, err
 	}
 

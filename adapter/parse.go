@@ -14,6 +14,8 @@ var (
 	ErrUnsupportedType = errors.New("unsupported type")
 	ErrEmptyDate       = errors.New("empty date")
 
+	ErrParseLink = errors.New("parse link error")
+
 	decoder = structure.NewDecoder(
 		structure.Option{
 			TagName:          "proxy",
@@ -25,7 +27,7 @@ var (
 func ParseClash(m map[string]any) (*Adapter, error) {
 	p, err := adapter.ParseProxy(m)
 	if err != nil {
-		log.Debugf("err:%v", err)
+		log.Errorf("err:%v", err)
 
 		if strings.Contains(err.Error(), "unsupport proxy type") {
 			return nil, ErrUnsupportedType
@@ -40,7 +42,7 @@ func ParseClashWithJson(s []byte) (*Adapter, error) {
 	var m map[string]any
 	err := json.Unmarshal(s, &m)
 	if err != nil {
-		log.Debugf("err:%v", err)
+		log.Errorf("err:%v", err)
 		return nil, err
 	}
 
@@ -51,7 +53,7 @@ func ParseClashWithYaml(s []byte) (*Adapter, error) {
 	var m map[string]any
 	err := yaml.Unmarshal(s, &m)
 	if err != nil {
-		log.Debugf("err:%v", err)
+		log.Errorf("err:%v", err)
 		return nil, err
 	}
 
