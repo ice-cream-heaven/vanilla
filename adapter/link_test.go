@@ -7,11 +7,9 @@ import (
 )
 
 func TestParseLink(t *testing.T) {
-	//log.SetLevel(log.DebugLevel)
+	// log.SetLevel(log.DebugLevel)
 	tests := []struct {
 		name string
-
-		link string
 
 		net bool
 
@@ -42,17 +40,20 @@ func TestParseLink(t *testing.T) {
 			name: "vmess://ew0KICAidiI6ICIyIiwNCiAgInBzIjogImJmMzBjODdmMDMyMHwxNjIuMTU5LjM4LjEzNiIsDQogICJhZGQiOiAiMTYyLjE1OS4zOC4xMzYiLA0KICAicG9ydCI6ICI4MCIsDQogICJpZCI6ICI2MGJlNWRkYi1jOWYxLTQ4ZWMtYjBlZS1mNmJkNDM2NGIzY2UiLA0KICAiYWlkIjogIjAiLA0KICAic2N5IjogImF1dG8iLA0KICAibmV0IjogIndzIiwNCiAgInR5cGUiOiAibm9uZSIsDQogICJob3N0IjogImNjcy5ob3N0bWpqLmNvbSIsDQogICJwYXRoIjogIi8iLA0KICAidGxzIjogIiIsDQogICJzbmkiOiAiIiwNCiAgImFscG4iOiAiIiwNCiAgImZwIjogIiINCn0=\n",
 		},
 		{
-			name: "vmess",
-			link: "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpwd2Q=@127.0.0.1:7890#%E5%90%8D%E5%AD%97\n",
-			//net:  true,
+			name: "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpwd2Q=@127.0.0.1:7890#%E5%90%8D%E5%AD%97\n",
+			// net:  true,
+		},
+		{
+			name: "hysteria2://sharecentrepro@ushy2.sharecentre.online:4434?peer=ushy2.sharecentre.online&obfs=none#SCP1",
+			net:  true,
+		},
+		{
+			name: "hysteria2://sharecentrepro@210.231.184.93:4433?peer=jpntt2.sharecentre.online&obfs=none#SCP2",
+			// net:  true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.link != "" {
-				tt.name = tt.link
-			}
-
 			got, err := adapter.ParseLink(tt.name)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("%s error = %v, wantErr %v", tt.name, err, tt.wantErr)

@@ -41,8 +41,10 @@ func ParseLink(s string) (*Adapter, error) {
 		return ParseLinkSS(s)
 	case "ssr":
 		return ParseLinkSSR(s)
-	case "hysteria", "hy", "hy2":
+	case "hysteria", "hy":
 		return ParseHysteria(s)
+	case "hysteria2", "hy2":
+		return ParseHysteria2(s)
 	default:
 		log.Debugf("unsupport v2ray scheme:%s(%s)", u.Scheme, s)
 		return nil, ErrUnsupportedType
@@ -112,6 +114,59 @@ func ParseHysteria(s string) (*Adapter, error) {
 
 	log.Debugf("hysteria opt:%+v", opt)
 	at, err := outbound.NewHysteria(opt)
+	if err != nil {
+		log.Errorf("err:%v", err)
+		return nil, err
+	}
+
+	return NewAdapter(adapter.NewProxy(at), opt)
+}
+
+func ParseHysteria2(s string) (*Adapter, error) {
+	u, err := url.Parse(s)
+	if err != nil {
+		log.Errorf("err:%v", err)
+		return nil, ErrParseLink
+	}
+
+	port, err := strconv.Atoi(u.Port())
+	if err != nil {
+		log.Errorf("err:%v", err)
+		return nil, err
+	}
+
+	var alpn []string
+	switch u.Query().Get("alpn") {
+	case "h3":
+		alpn = append(alpn, "h3")
+	}
+
+	opt := outbound.Hysteria2Option{
+		BasicOption: outbound.BasicOption{},
+		Name:        u.Fragment,
+		Server:      u.Hostname(),
+		Port:        port,
+		Password:    u.User.String(),
+		Obfs: func() string {
+			switch u.Query().Get("obfs") {
+			case "none":
+				return ""
+			default:
+				return u.Query().Get("obfs")
+			}
+		}(),
+		ObfsPassword:   u.Query().Get("obfs-psssowrd"),
+		SNI:            u.Query().Get("peer"),
+		SkipCertVerify: false,
+		Fingerprint:    "",
+		ALPN:           alpn,
+		CustomCA:       "",
+		CustomCAString: "",
+		CWND:           0,
+	}
+
+	log.Debugf("hysteria2 opt:%+v", opt)
+	at, err := outbound.NewHysteria2(opt)
 	if err != nil {
 		log.Errorf("err:%v", err)
 		return nil, err

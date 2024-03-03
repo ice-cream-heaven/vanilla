@@ -3,6 +3,7 @@ package adapter
 import (
 	"errors"
 	"github.com/ice-cream-heaven/log"
+	"github.com/ice-cream-heaven/utils/app"
 	"github.com/ice-cream-heaven/utils/json"
 	"github.com/metacubex/mihomo/adapter"
 	"github.com/metacubex/mihomo/common/structure"
@@ -25,6 +26,21 @@ var (
 )
 
 func ParseClash(m map[string]any) (*Adapter, error) {
+	if _, ok := m["name"]; !ok {
+		m["name"] = app.Name
+	}
+
+	if typ, ok := m["type"]; ok {
+		if t, ok := typ.(string); ok {
+			switch t {
+			case "shadowsocks":
+				m["type"] = "ss"
+			case "shadowsocksr":
+				m["type"] = "ssr"
+			}
+		}
+	}
+
 	p, err := adapter.ParseProxy(m)
 	if err != nil {
 		log.Errorf("err:%v", err)
